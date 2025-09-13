@@ -1,0 +1,68 @@
+apiVersion: policy.cloudwithdeethesh.com/v1alpha1
+kind: PolicyRule
+metadata:
+  labels:
+    app.kubernetes.io/name: policy-enforcer-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: sample-resource-policy
+spec:
+  # Target selector for which resources this policy applies to
+  selector:
+    matchLabels:
+      environment: production
+  
+  # Namespaces where this policy should be enforced
+  namespaces:
+    - default
+    - production
+  
+  # Enforcement action: enforce, warn, or audit
+  enforcementAction: enforce
+  
+  # Resource policies
+  resourcePolicies:
+    requireResourceLimits: true
+    requireResourceRequests: true
+    defaultResourceLimits:
+      cpu: "500m"
+      memory: "512Mi"
+    defaultResourceRequests:
+      cpu: "100m"
+      memory: "128Mi"
+    maxResourceLimits:
+      cpu: "2"
+      memory: "2Gi"
+  
+  # Probe policies
+  probePolicies:
+    requireLivenessProbe: true
+    requireReadinessProbe: true
+    defaultLivenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    defaultReadinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+  
+  # Security policies
+  securityPolicies:
+    requireNonRootUser: true
+    requireReadOnlyRootFilesystem: true
+    defaultSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    forbiddenCapabilities:
+      - SYS_ADMIN
+      - NET_ADMIN
+      - SYS_PTRACE

@@ -1,0 +1,99 @@
+apiVersion: policy.cloudwithdeethesh.com/v1alpha1
+kind: PolicyRule
+metadata:
+  name: development-policy
+  namespace: default
+spec:
+  # Apply to development environments only
+  selector:
+    matchLabels:
+      environment: development
+  
+  # Only enforce in development namespaces
+  namespaces:
+    - dev
+    - staging
+  
+  # Use warn mode for development
+  enforcementAction: warn
+  
+  # Relaxed resource policies for development
+  resourcePolicies:
+    requireResourceLimits: false
+    requireResourceRequests: true
+    defaultResourceRequests:
+      cpu: "50m"
+      memory: "64Mi"
+  
+  # Basic probe requirements
+  probePolicies:
+    requireLivenessProbe: false
+    requireReadinessProbe: true
+    defaultReadinessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 10
+  
+  # Basic security requirements
+  securityPolicies:
+    requireNonRootUser: false
+    requireReadOnlyRootFilesystem: false
+---
+apiVersion: policy.cloudwithdeethesh.com/v1alpha1
+kind: PolicyRule
+metadata:
+  name: strict-security-policy
+  namespace: default
+spec:
+  # Apply to all pods with security=strict label
+  selector:
+    matchLabels:
+      security: strict
+  
+  # Enforce in all namespaces
+  namespaces: []
+  
+  # Strict enforcement
+  enforcementAction: enforce
+  
+  # Strict resource limits
+  resourcePolicies:
+    requireResourceLimits: true
+    requireResourceRequests: true
+    maxResourceLimits:
+      cpu: "1"
+      memory: "1Gi"
+    defaultResourceLimits:
+      cpu: "200m"
+      memory: "256Mi"
+    defaultResourceRequests:
+      cpu: "50m"
+      memory: "64Mi"
+  
+  # Required probes
+  probePolicies:
+    requireLivenessProbe: true
+    requireReadinessProbe: true
+  
+  # Strict security requirements
+  securityPolicies:
+    requireNonRootUser: true
+    requireReadOnlyRootFilesystem: true
+    defaultSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    forbiddenCapabilities:
+      - SYS_ADMIN
+      - NET_ADMIN
+      - SYS_PTRACE
+      - SYS_TIME
+      - SYS_MODULE
