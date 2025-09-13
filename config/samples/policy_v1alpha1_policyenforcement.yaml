@@ -1,0 +1,21 @@
+apiVersion: policy.cloudwithdeethesh.com/v1alpha1
+kind: PolicyEnforcement
+metadata:
+  labels:
+    app.kubernetes.io/name: policy-enforcer-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: policyenforcement-sample
+spec:
+  # Reference to the PolicyRule being enforced
+  policyRuleRef:
+    name: sample-resource-policy
+  
+  # Target resource being enforced
+  targetRef:
+    apiVersion: v1
+    kind: Pod
+    name: example-pod
+    namespace: default
+  
+  # When the enforcement was applied
+  enforcementTime: "2025-01-13T21:33:00Z"

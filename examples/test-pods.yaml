@@ -1,0 +1,88 @@
+# Example pod that violates policies (missing resource limits, probes, security context)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: violating-pod
+  labels:
+    environment: production
+    app: example
+spec:
+  containers:
+  - name: app
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    # Missing resource limits/requests
+    # Missing liveness/readiness probes
+    # Missing security context
+
+---
+# Example pod that complies with policies
+apiVersion: v1
+kind: Pod
+metadata:
+  name: compliant-pod
+  labels:
+    environment: production
+    app: example
+spec:
+  containers:
+  - name: app
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+
+---
+# Example pod for development environment (less strict enforcement)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dev-pod
+  labels:
+    environment: development
+    app: example-dev
+spec:
+  containers:
+  - name: app
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    # Only resource requests are required in dev
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+    # Only readiness probe required in dev
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 10
